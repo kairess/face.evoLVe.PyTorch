@@ -21,10 +21,10 @@ def preprocess_input(img, img_size):
     resized = cv2.resize(img, (128, 128))
 
     # center crop image
-    a=int((128-112)/2) # x start
-    b=int((128-112)/2+112) # x end
-    c=int((128-112)/2) # y start
-    d=int((128-112)/2+112) # y end
+    a=int((128-img_size)/2) # x start
+    b=int((128-img_size)/2+img_size) # x end
+    c=int((128-img_size)/2) # y start
+    d=int((128-img_size)/2+img_size) # y end
     ccropped = resized[a:b, c:d] # center crop the image
     ccropped = ccropped[...,::-1] # BGR to RGB
 

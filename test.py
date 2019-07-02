@@ -12,7 +12,10 @@ DEVICE = 'cpu' # torch.device("cuda:0")
 USE_FLIP = True
 MODEL_PATH = 'pretrained/backbone_ir50_asia.pth'
 
+torch.set_grad_enabled(False)
+
 # load model
+print('[*] Load model...')
 backbone = IR_50([IMG_SIZE, IMG_SIZE])
 backbone.load_state_dict(torch.load(MODEL_PATH, map_location=DEVICE))
 backbone.to(DEVICE)
@@ -21,6 +24,8 @@ backbone.eval()
 img_list = glob.glob('imgs/*/*.jpg')
 random.shuffle(img_list)
 
+# test
+print('[*] Inference...')
 for img_path_A in img_list:
   img_path_B = random.sample(img_list, k=1)[0]
 
@@ -30,31 +35,34 @@ for img_path_A in img_list:
   img_A = cv2.imread(img_path_A, cv2.IMREAD_COLOR)
   img_B = cv2.imread(img_path_B, cv2.IMREAD_COLOR)
 
+  # preprocess
   cropped_A, flipped_A = preprocess_input(img_A, img_size=IMG_SIZE)
   cropped_B, flipped_B = preprocess_input(img_B, img_size=IMG_SIZE)
 
-  # inference
-  with torch.no_grad():
-    # compute A
-    emb_A = backbone(cropped_A.to(DEVICE)).cpu()
+  # compute A
+  emb_A = backbone(cropped_A.to(DEVICE)).cpu()
+  features_A = l2_norm(emb_A)
+  
+  # compute B
+  emb_B = backbone(cropped_B.to(DEVICE)).cpu()
+  features_B = l2_norm(emb_B)
+
+  if USE_FLIP:
     emb_A_flipped = backbone(flipped_A.to(DEVICE)).cpu()
-
-    features_A = l2_norm(emb_A)
     features_A_sum = l2_norm(emb_A + emb_A_flipped)
-    
-    # compute B
-    emb_B = backbone(cropped_B.to(DEVICE)).cpu()
-    emb_B_flipped = backbone(flipped_B.to(DEVICE)).cpu()
 
-    features_B = l2_norm(emb_B)
+    emb_B_flipped = backbone(flipped_B.to(DEVICE)).cpu()
     features_B_sum = l2_norm(emb_B + emb_B_flipped)
 
-    # compute distance of features
+  # compute distance of features
+  if USE_FLIP:
     dist = np.linalg.norm(features_A_sum - features_B_sum)
+  else:
+    dist = np.linalg.norm(features_A - features_B)
 
-    print(subject_A, subject_B, dist)
+  print(subject_A, subject_B, dist)
 
-    # show result
-    cv2.imshow('AB', np.concatenate([img_A, img_B], axis=1))
-    if cv2.waitKey(0) == ord('q'):
-      break
+  # show result
+  cv2.imshow('AB', np.concatenate([img_A, img_B], axis=1))
+  if cv2.waitKey(0) == ord('q'):
+    break
