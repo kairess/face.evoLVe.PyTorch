@@ -10,6 +10,7 @@ import time
 camera = Camera(device=0, resize=CAM_RESIZED)
 
 # main gui
+print('[*] Creating UI...')
 app = gui('CRAIMS - Customer Relationship AI Management System') # , '%sx%s' % WINDOW_SIZE
 app.setBg(COLOR_SCHEME['bg'])
 app.setFg(COLOR_SCHEME['font'])
@@ -53,33 +54,20 @@ with app.tabbedFrame('TABS'):
     app.addLabel('tab2_label', 'tab2')
 
 # threading camera
+print('[*] Initializing camera thread...')
 app.thread(camera.thread, app)
 
 # exit
 def check_stop():
   ok = app.yesNoBox('종료 확인', '프로그램을 종료합니다')
   if ok:
+    print('[*] Terminating...')
+    print('[*] Release camera...')
     camera.cap.release()
     time.sleep(2)
   return ok
 
 app.setStopFunction(check_stop)
 
+print('[*] App has been started successfully!')
 app.go()
-
-
-
-# data = [["Homer", "Simpson", "America", 40],
-#         ["Marge", "Simpson", "America", 38],
-#         ["Lisa", "Simpson", "America", 12],
-#         ["Maggie", "Simpson", "America", 4], 
-#         ["Bart", "Simpson", "America", 14]]
-
-# with gui("Updating Labels") as app:
-#     with app.tabbedFrame("Address Book"):
-#         for pos in range(len(data)):
-#             with app.tab(data[pos][0]):
-#                 app.entry(str(pos)+"fName", data[pos][0], label="First Name")
-#                 app.entry(str(pos)+"lName", data[pos][1], label="Last Name")
-#                 app.entry(str(pos)+"country", data[pos][2], label="Country")
-#                 app.entry(str(pos)+"age", data[pos][3], kind='numeric', label="Age")

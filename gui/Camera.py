@@ -6,12 +6,14 @@ import time
 
 class Camera():
   def __init__(self, device=0, resize=(640, 360)):
+    print('[*] Trying to find camera device...')
     self.cap = cv2.VideoCapture(device)
     self.resize = resize
 
     time.sleep(2)
 
     if not self.cap.isOpened():
+      print('[!] Camera is not connected!')
       exit()
 
     ret, img = self.cap.read()
@@ -24,6 +26,7 @@ class Camera():
       ret, img = self.cap.read()
 
       if not ret:
+        print('[!] Cannot receive frame data from camera')
         break
 
       img = cv2.resize(img, self.resize)
@@ -34,4 +37,5 @@ class Camera():
       # app.queueFunction(app.setImageData, 'pic', img_tk, fmt='PhotoImage') # slow
       app.setImageData('pic', img_tk, fmt='PhotoImage')
 
+    print('[!] Disconnected to camera')
     return False
