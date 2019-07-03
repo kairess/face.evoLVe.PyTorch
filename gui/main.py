@@ -1,47 +1,59 @@
 from appJar import gui
 from PIL import Image, ImageTk
-import time
 import numpy as np
 
 from Camera import Camera
+from config import *
 
-WINDOW_SIZE = (640, 480)
-# CAM_SIZE = (1920, 1080)
-CAM_RESIZED = (640, 360)
+import time
 
 camera = Camera(device=0, resize=CAM_RESIZED)
 
 # main gui
-app = gui('Login Window', '%sx%s' % WINDOW_SIZE)
-app.setBg('orange')
-app.setFont(18)
+app = gui('CRAIMS - Customer Relationship AI Management System') # , '%sx%s' % WINDOW_SIZE
+app.setBg(COLOR_SCHEME['bg'])
+app.setFg(COLOR_SCHEME['font'])
+app.setFont(14)
 
-app.addLabel('title', 'Welcome to appJar')
-app.setLabelBg('title', 'red')
+with app.tabbedFrame('TABS'):
+  with app.tab('MAIN'):
+    with app.frame('CAMERA', row=0, column=0, stretch='COLUMN', rowspan=3):
+      img_tk = ImageTk.PhotoImage(Image.fromarray(np.zeros((CAM_RESIZED[1], CAM_RESIZED[0], 3), np.uint8), 'RGB'))
+      app.addImageData('pic', img_tk, fmt='PhotoImage')
 
-app.addLabelEntry('Username')
-app.addLabelSecretEntry('Password')
-app.setFocus('Username')
+    with app.frame('TITLE', row=0, column=1, stretch='COLUMN'):
+      app.addLabel('menu_title', 'MENU')
 
-img_tk = ImageTk.PhotoImage(Image.fromarray(np.zeros((CAM_RESIZED[1], CAM_RESIZED[0], 3), np.uint8), 'RGB'))
-app.addImageData('pic', img_tk, fmt='PhotoImage')
+      app.addEmptyMessage('selected_menu')
+      app.setMessage('selected_menu', '1.abcdefghijklmnopqrstuvwxyz\n2.abcdefghijklmnopqrstuvwxyz\n3.abcdefghijklmnopqrstuvwxyz\n4.abcdefghijklmnopqrstuvwxyz')
+
+    def press(button_idx):
+        print(int(button_idx))
+
+    with app.frame('MENU1', row=1, column=1, stretch='COLUMN', sticky='NEW'):
+      app.addButtons([
+        ['0', '1', '2', '3', '4'],
+        ['5', '6', '7', '8', '9']
+      ], press)
+
+    with app.frame('MENU2', row=2, column=1, stretch='COLUMN', sticky='NEW'):
+      app.addButtons([
+        ['10', '11', '12', '13', '14'],
+        ['15', '16', '17', '18', '19']
+      ], press)
+
+    with app.frame('CAMERA_CONTROL', row=3, column=0, stretch='COLUMN'):
+      app.addButtons(['Submit', 'Cancel'], press)
+
+    with app.frame('MENU_CONTROL', row=3, column=1, stretch='COLUMN'):
+      app.addButtons(['Submit2', 'Cancel2'], press)
+
+  ''' TAB 2 '''
+  with app.tab('TAB2'):
+    app.addLabel('tab2_label', 'tab2')
 
 # threading camera
 app.thread(camera.thread, app)
-
-# app.text('log', scroll=True)
-
-
-def press(button):
-  if button == 'Cancel':
-    app.stop()
-  else:
-    usr = app.getEntry('Username')
-    pwd = app.getEntry('Password')
-    print('User:', usr, 'Pass:', pwd)
-
-app.addButtons(['Submit', 'Cancel'], press)
-
 
 # exit
 def check_stop():
