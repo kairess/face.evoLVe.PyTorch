@@ -5,13 +5,14 @@ import numpy as np
 
 from Camera import Camera
 
+WINDOW_SIZE = (640, 480)
 # CAM_SIZE = (1920, 1080)
 CAM_RESIZED = (640, 360)
 
 camera = Camera(device=0, resize=CAM_RESIZED)
 
 # main gui
-app = gui('Login Window', '640x480')
+app = gui('Login Window', '%sx%s' % WINDOW_SIZE)
 app.setBg('orange')
 app.setFont(18)
 
