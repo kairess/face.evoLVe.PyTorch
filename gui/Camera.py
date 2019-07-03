@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk
 
+from Face import Face
+from config import *
+
 import time
 
 class Camera():
@@ -17,9 +20,27 @@ class Camera():
       exit()
 
     ret, img = self.cap.read()
-    h, w, _ = img.shape
+    self.cam_size = (img.shape[1], img.shape[0])
 
-    self.cam_size = (w, h)
+    img = self.center_crop(img)
+    self.cam_size_resized = (img.shape[1], img.shape[0])
+
+    print('[*] Load face detection model...')
+    self.facenet = cv2.dnn.readNetFromTensorflow(
+      'face_models/opencv_face_detector_uint8.pb',
+      'face_models/opencv_face_detector.pbtxt'
+    )
+
+    self.faces = []
+
+  def center_crop(self, img):
+    h, w, _ = img.shape
+    img = img[:, int((w-h)/2):int(w-(w-h)/2), :]
+
+    if img.shape[0] != img.shape[1]:
+      img = cv2.resize(img, (img.shape[0], img.shape[0]))
+
+    return img
 
   def thread(self, app):
     while self.cap.isOpened():
@@ -29,13 +50,82 @@ class Camera():
         print('[!] Cannot receive frame data from camera')
         break
 
-      img = cv2.resize(img, self.resize)
-      img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+      img = self.center_crop(img)
 
-      img_tk = ImageTk.PhotoImage(Image.fromarray(img, 'RGB'))
+      img_vis = img.copy()
+
+      # detect faces
+      self.detect_faces(img)
+
+      # visualize
+      for face in self.faces:
+        x1, y1, x2, y2 = face.rect
+        cv2.rectangle(img_vis, pt1=(x1, y1), pt2=(x2, y2), color=(0, 255, 0), thickness=2)
+
+      img_vis = cv2.resize(img_vis, self.resize)
+      img_vis = cv2.cvtColor(img_vis, cv2.COLOR_BGR2RGB)
+
+      img_tk = ImageTk.PhotoImage(Image.fromarray(img_vis, 'RGB'))
 
       # app.queueFunction(app.setImageData, 'pic', img_tk, fmt='PhotoImage') # slow
       app.setImageData('pic', img_tk, fmt='PhotoImage')
 
     print('[!] Disconnected to camera')
     return False
+
+  def detect_faces(self, img):
+    blob = cv2.dnn.blobFromImage(img, scalefactor=1.0, size=(300, 300), mean=[104, 117, 123], swapRB=False, crop=False)
+    self.facenet.setInput(blob)
+    dets = self.facenet.forward()
+
+    for i in range(dets.shape[2]):
+      conf = dets[0, 0, i, 2]
+      if conf < FACE_TRACK_THRESHOLD:
+        continue
+
+      track_face_found = False
+
+      x1 = dets[0, 0, i, 3] * self.cam_size_resized[0]
+      y1 = dets[0, 0, i, 4] * self.cam_size_resized[1]
+      x2 = dets[0, 0, i, 5] * self.cam_size_resized[0]
+      y2 = dets[0, 0, i, 6] * self.cam_size_resized[1]
+
+      face_length = max(x2 - x1, y2 - y1)
+      cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
+
+      x1 = int(cx - face_length / 2)
+      y1 = int(cy - face_length / 2)
+      x2 = int(cx + face_length / 2)
+      y2 = int(cy + face_length / 2)
+
+      rect = [x1, y1, x2, y2]
+
+      if face_length < MIN_FACE_SIZE:
+        continue
+
+      for face in self.faces:
+        if not face.available or face.tracked:
+          continue
+
+        fdist = face.compute_face_distance(rect)
+
+        if fdist < FACE_DISTANCE_THRESHOLD: # same face
+          track_face_found = True
+          face.init = False
+          face.tracked = True
+          face.rect = rect
+          face.conf = conf
+          break
+
+      if conf > FACE_DETECTION_THRESHOLD and not track_face_found: # new face
+        self.faces.append(Face(rect, conf))
+
+    # check unavailable faces
+    for i, face in enumerate(self.faces):
+      if face.available and not face.init and not face.tracked:
+        face.available = False
+        del self.faces[i]
+        continue
+
+      face.init = False
+      face.tracked = False
