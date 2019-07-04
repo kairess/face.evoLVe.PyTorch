@@ -55,7 +55,7 @@ with app.tabbedFrame('TABS'):
     def button_capture_face():
       camera.captured_face_img = camera.biggest_face_img.copy()
 
-      img_tk = ImageTk.PhotoImage(Image.fromarray(camera.captured_face_img, 'RGB'))
+      img_tk = ImageTk.PhotoImage(Image.fromarray(cv2.cvtColor(camera.captured_face_img, cv2.COLOR_BGR2RGB), 'RGB'))
       app.setImageData('biggest_face', img_tk, fmt='PhotoImage')
       app.showSubWindow('User Window')
 

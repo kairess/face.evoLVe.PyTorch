@@ -85,8 +85,7 @@ class Camera():
         self.biggest_face_img = np.zeros((128, 128, 3), np.uint8)
         continue
 
-      biggest_face_img = cv2.resize(biggest_face_img, (128, 128), interpolation=cv2.INTER_NEAREST)
-      self.biggest_face_img = cv2.cvtColor(biggest_face_img, cv2.COLOR_BGR2RGB)
+      self.biggest_face_img = cv2.resize(biggest_face_img, (128, 128), interpolation=cv2.INTER_NEAREST)
 
     print('[!] Disconnected to camera')
     return False
