@@ -57,18 +57,35 @@ class Camera():
       # detect faces
       self.detect_faces(img)
 
-      # visualize
+      self.biggest_face_img = None
+
+      # visualize and get biggest face image
       for face in self.faces:
         x1, y1, x2, y2 = face.rect
-        cv2.rectangle(img_vis, pt1=(x1, y1), pt2=(x2, y2), color=(0, 255, 0), thickness=2)
+
+        if face.biggest:
+          self.biggest_face_img = img[y1:y2, x1:x2]
+
+        rect_color = (0, 0, 255)
+        if face.biggest:
+          rect_color = (0, 255, 0)
+
+        cv2.rectangle(img_vis, pt1=(x1, y1), pt2=(x2, y2), color=rect_color, thickness=2)
 
       img_vis = cv2.resize(img_vis, self.resize)
       img_vis = cv2.cvtColor(img_vis, cv2.COLOR_BGR2RGB)
 
       img_tk = ImageTk.PhotoImage(Image.fromarray(img_vis, 'RGB'))
-
       # app.queueFunction(app.setImageData, 'pic', img_tk, fmt='PhotoImage') # slow
-      app.setImageData('pic', img_tk, fmt='PhotoImage')
+      app.setImageData('cam', img_tk, fmt='PhotoImage')
+
+      # biggest face image is not exist or has 0-length, pass this frame
+      if self.biggest_face_img is None or self.biggest_face_img.shape[0] == 0 or self.biggest_face_img.shape[1] == 0:
+        continue
+
+      self.biggest_face_img = cv2.resize(self.biggest_face_img, (224, 224))
+      img_tk = ImageTk.PhotoImage(Image.fromarray(self.biggest_face_img, 'RGB'))
+      app.setImageData('biggest_face', img_tk, fmt='PhotoImage')
 
     print('[!] Disconnected to camera')
     return False
@@ -120,7 +137,10 @@ class Camera():
       if conf > FACE_DETECTION_THRESHOLD and not track_face_found: # new face
         self.faces.append(Face(rect, conf))
 
-    # check unavailable faces
+    # check unavailable faces and find biggest face
+    face_idx = 0
+    biggest_idx, biggest_face_width = None, 0
+
     for i, face in enumerate(self.faces):
       if face.available and not face.init and not face.tracked:
         face.available = False
@@ -129,3 +149,19 @@ class Camera():
 
       face.init = False
       face.tracked = False
+      face.biggest = False
+
+      x1, y1, x2, y2 = face.rect
+
+      if x2 - x1 > biggest_face_width:
+        biggest_idx = face_idx
+        biggest_face_width = x2 - x1
+
+      face_idx += 1
+
+    if biggest_idx is not None:
+      self.faces[biggest_idx].biggest = True
+
+  def destroy(self):
+    print('[*] Release camera...')
+    self.cap.release()

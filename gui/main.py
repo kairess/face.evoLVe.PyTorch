@@ -20,7 +20,7 @@ with app.tabbedFrame('TABS'):
   with app.tab('MAIN'):
     with app.frame('CAMERA', row=0, column=0, stretch='COLUMN', rowspan=3):
       img_tk = ImageTk.PhotoImage(Image.fromarray(np.zeros((CAM_RESIZED[1], CAM_RESIZED[0], 3), np.uint8), 'RGB'))
-      app.addImageData('pic', img_tk, fmt='PhotoImage')
+      app.addImageData('cam', img_tk, fmt='PhotoImage')
 
     with app.frame('TITLE', row=0, column=1, stretch='COLUMN'):
       app.addLabel('menu_title', 'MENU')
@@ -29,7 +29,7 @@ with app.tabbedFrame('TABS'):
       app.setMessage('selected_menu', '1.abcdefghijklmnopqrstuvwxyz\n2.abcdefghijklmnopqrstuvwxyz\n3.abcdefghijklmnopqrstuvwxyz\n4.abcdefghijklmnopqrstuvwxyz')
 
     def press(button_idx):
-        print(int(button_idx))
+      print(int(button_idx))
 
     with app.frame('MENU1', row=1, column=1, stretch='COLUMN', sticky='NEW'):
       app.addButtons([
@@ -43,8 +43,14 @@ with app.tabbedFrame('TABS'):
         ['15', '16', '17', '18', '19']
       ], press)
 
+    def capture_face():
+      print('capture_face')
+
+    def recognize():
+      print('recognize')
+
     with app.frame('CAMERA_CONTROL', row=3, column=0, stretch='COLUMN'):
-      app.addButtons(['Submit', 'Cancel'], press)
+      app.addButtons(['Capture Face', 'Find Face'], [capture_face, recognize])
 
     with app.frame('MENU_CONTROL', row=3, column=1, stretch='COLUMN'):
       app.addButtons(['Submit2', 'Cancel2'], press)
@@ -52,6 +58,8 @@ with app.tabbedFrame('TABS'):
   ''' TAB 2 '''
   with app.tab('TAB2'):
     app.addLabel('tab2_label', 'tab2')
+    img_tk = ImageTk.PhotoImage(Image.fromarray(np.zeros((224, 224, 3), np.uint8), 'RGB'))
+    app.addImageData('biggest_face', img_tk, fmt='PhotoImage')
 
 # threading camera
 print('[*] Initializing camera thread...')
@@ -62,9 +70,7 @@ def check_stop():
   ok = app.yesNoBox('종료 확인', '프로그램을 종료합니다')
   if ok:
     print('[*] Terminating...')
-    print('[*] Release camera...')
-    camera.cap.release()
-    time.sleep(2)
+    camera.destroy()
   return ok
 
 app.setStopFunction(check_stop)
