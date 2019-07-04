@@ -1,11 +1,18 @@
+#-*- coding: utf-8 -*-
+
 from appJar import gui
 from PIL import Image, ImageTk
 import numpy as np
+import cv2
 
 from Camera import Camera
+from User import User
 from config import *
 
-import time
+import time, sqlite3
+
+print('[*] Connecting to database...')
+conn = sqlite3.connect('./db/data.db')
 
 camera = Camera(device=0, resize=CAM_RESIZED)
 
@@ -16,7 +23,7 @@ print('[*] Creating UI...')
 app = gui('CRAIMS - Customer Relationship AI Management System') # , '%sx%s' % WINDOW_SIZE
 app.setBg(COLOR_SCHEME['bg'])
 app.setFg(COLOR_SCHEME['font'])
-app.setFont(14)
+app.setFont(size=14) #, family='Nanum Gothic')
 
 with app.tabbedFrame('TABS'):
   with app.tab('MAIN'):
@@ -74,11 +81,12 @@ Select user sub window
 '''
 app.startSubWindow('User Window', modal=True)
 
-img_tk = ImageTk.PhotoImage(Image.fromarray(np.zeros((112, 112, 3), np.uint8), 'RGB'))
+img_tk = ImageTk.PhotoImage(Image.fromarray(np.zeros((128, 128, 3), np.uint8), 'RGB'))
 app.addImageData('biggest_face', img_tk, fmt='PhotoImage')
 
 app.addEntry('user_name')
-app.setEntryDefault('user_name', '김폭풍')
+# app.addValidationEntry('user_name')
+# app.setEntryDefault('user_name', '김폭풍')
 
 app.addRadioButton('user_gender', '여')
 app.addRadioButton('user_gender', '남')
@@ -91,7 +99,7 @@ app.addProperties('user_tastes', USER_TASTES)
 app.setFocus('user_name')
 
 def reset_user_inputs():
-  img_tk = ImageTk.PhotoImage(Image.fromarray(np.zeros((112, 112, 3), np.uint8), 'RGB'))
+  img_tk = ImageTk.PhotoImage(Image.fromarray(np.zeros((128, 128, 3), np.uint8), 'RGB'))
   app.setImageData('biggest_face', img_tk, fmt='PhotoImage')
 
   app.setEntry('user_name', '', callFunction=False)
@@ -105,8 +113,20 @@ def button_create_user():
     print('[!] Error: button_create_user()')
     return False
 
-  user_face_img = camera.captured_face_img.copy()
-  print(user_face_img)
+  user_name = app.getEntry('user_name')
+  user_gender = 0 if app.getRadioButton('user_gender') == '남' else 1
+  user_age = int(app.getOptionBox('user_age'))
+  user_tastes = app.getProperties('user_tastes')
+
+  if user_name is None or user_name == '':
+    # app.setEntryInvalid('user_name')
+    app.setFocus('user_name')
+    return False
+
+  user_face_img = camera.captured_face_img.copy() # RGB
+
+  user = User()
+  user.create(conn, name=user_name, gender=user_gender, age=user_age, tastes=user_tastes, emb='123123', img=user_face_img)
 
   reset_user_inputs()
   app.hideSubWindow('User Window')
