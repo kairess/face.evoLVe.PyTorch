@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk
 
-from Face import Face
-from config import *
+from .Face import Face
+from .config import *
 
 import time
 

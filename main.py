@@ -5,9 +5,10 @@ from PIL import Image, ImageTk
 import numpy as np
 import cv2
 
-from Camera import Camera
-from User import User
-from config import *
+from gui.Camera import Camera
+from gui.User import User
+from gui.Recognizer import Recognizer
+from gui.config import *
 
 import time, sqlite3
 
@@ -15,6 +16,7 @@ print('[*] Connecting to database...')
 conn = sqlite3.connect('./db/data.db')
 
 camera = Camera(device=0, resize=CAM_RESIZED)
+recognizer = Recognizer()
 
 '''
 Main GUI
@@ -123,10 +125,12 @@ def button_create_user():
     app.setFocus('user_name')
     return False
 
-  user_face_img = camera.captured_face_img.copy() # RGB
+  user_face_img = camera.captured_face_img.copy()
+
+  emb = recognizer.compute_emb(user_face_img)
 
   user = User()
-  user.create(conn, name=user_name, gender=user_gender, age=user_age, tastes=user_tastes, emb='123123', img=user_face_img)
+  user.create(conn, name=user_name, gender=user_gender, age=user_age, tastes=user_tastes, emb=emb, img=user_face_img)
 
   reset_user_inputs()
   app.hideSubWindow('User Window')

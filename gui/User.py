@@ -1,6 +1,6 @@
 import cv2
 
-from config import *
+from .config import *
 
 import datetime, json
 
@@ -26,7 +26,7 @@ class User():
     self.gender = gender
     self.age = age
     self.tastes = tastes
-    self.emb = None
+    self.emb = emb
     self.id = c.lastrowid
 
     cv2.imwrite('db/face_imgs/%d.jpg' % (self.id,), img)

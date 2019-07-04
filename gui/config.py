@@ -18,7 +18,11 @@ FACE_TRACK_THRESHOLD = 0.35
 FACE_DISTANCE_THRESHOLD = 100
 MIN_FACE_SIZE = 100
 
-FACE_INPUT_SIZE = (112, 112)
+FACE_INPUT_SIZE = 112
+
+DEVICE = 'cpu' # torch.device("cuda:0")
+USE_FLIP = True
+MODEL_PATH = 'pretrained/backbone_ir50_asia.pth'
 
 USER_TASTES = {
   'Cheese': False,
