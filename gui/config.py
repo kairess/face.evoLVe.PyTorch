@@ -17,3 +17,13 @@ FACE_DETECTION_THRESHOLD = 0.7
 FACE_TRACK_THRESHOLD = 0.35
 FACE_DISTANCE_THRESHOLD = 100
 MIN_FACE_SIZE = 100
+
+FACE_INPUT_SIZE = (112, 112)
+
+USER_TASTES = {
+  'Cheese': False,
+  'Tomato': False,
+  'Bacon': False,
+  'Corn': False,
+  'Mushroom': False
+}

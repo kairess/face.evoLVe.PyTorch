@@ -32,6 +32,7 @@ class Camera():
     )
 
     self.faces = []
+    self.captured_face_img = None
 
   def center_crop(self, img):
     h, w, _ = img.shape
@@ -57,14 +58,14 @@ class Camera():
       # detect faces
       self.detect_faces(img)
 
-      self.biggest_face_img = None
+      biggest_face_img = None
 
       # visualize and get biggest face image
       for face in self.faces:
         x1, y1, x2, y2 = face.rect
 
         if face.biggest:
-          self.biggest_face_img = img[y1:y2, x1:x2]
+          biggest_face_img = img[y1:y2, x1:x2]
 
         rect_color = (0, 0, 255)
         if face.biggest:
@@ -80,12 +81,13 @@ class Camera():
       app.setImageData('cam', img_tk, fmt='PhotoImage')
 
       # biggest face image is not exist or has 0-length, pass this frame
-      if self.biggest_face_img is None or self.biggest_face_img.shape[0] == 0 or self.biggest_face_img.shape[1] == 0:
+      if biggest_face_img is None or biggest_face_img.shape[0] == 0 or biggest_face_img.shape[1] == 0:
+        self.biggest_face_img = np.zeros((FACE_INPUT_SIZE[0], FACE_INPUT_SIZE[1], 3), np.uint8)
         continue
 
-      self.biggest_face_img = cv2.resize(self.biggest_face_img, (224, 224))
-      img_tk = ImageTk.PhotoImage(Image.fromarray(self.biggest_face_img, 'RGB'))
-      app.setImageData('biggest_face', img_tk, fmt='PhotoImage')
+      biggest_face_img = cv2.resize(biggest_face_img, (128, 128), interpolation=cv2.INTER_NEAREST)
+      biggest_face_img = biggest_face_img[8:120, 8:120] # (112, 112)
+      self.biggest_face_img = cv2.cvtColor(biggest_face_img, cv2.COLOR_BGR2RGB)
 
     print('[!] Disconnected to camera')
     return False
