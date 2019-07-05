@@ -9,11 +9,12 @@ from gui.Camera import Camera
 from gui.User import User
 from gui.Recognizer import Recognizer
 from gui.config import *
+from gui.Database import Database
 
 import time, sqlite3
 
-print('[*] Connecting to database...')
-conn = sqlite3.connect('./db/data.db')
+db = Database()
+users = db.get_users()
 
 camera = Camera(device=0, resize=CAM_RESIZED)
 recognizer = Recognizer()
@@ -129,8 +130,7 @@ def button_create_user():
 
   emb = recognizer.compute_emb(user_face_img)
 
-  user = User()
-  user.create(conn, name=user_name, gender=user_gender, age=user_age, tastes=user_tastes, emb=emb, img=user_face_img)
+  db.create_user(name=user_name, gender=user_gender, age=user_age, tastes=user_tastes, emb=emb, img=user_face_img)
 
   reset_user_inputs()
   app.hideSubWindow('User Window')

@@ -1,4 +1,5 @@
 import sqlite3, os, datetime, json
+import numpy as np
 
 db_list = ['data']
 
@@ -26,7 +27,7 @@ c.execute('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)', (
   0,
   30,
   json.dumps({'abc': True, 'bcd': False}),
-  '123123123'
+  np.zeros((1, 512), np.float32)
 ))
 
 conn.commit()
