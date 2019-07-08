@@ -36,4 +36,6 @@ class Database():
 
     self.conn.commit()
 
-    cv2.imwrite('db/face_imgs/%d.jpg' % (self.id,), img)
+    last_id = c.lastrowid
+
+    cv2.imwrite('db/face_imgs/%d.jpg' % (last_id,), img)

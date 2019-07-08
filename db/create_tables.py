@@ -27,7 +27,7 @@ c.execute('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)', (
   0,
   30,
   json.dumps({'abc': True, 'bcd': False}),
-  np.zeros((1, 512), np.float32)
+  np.ones((1, 512), np.float32)
 ))
 
 conn.commit()

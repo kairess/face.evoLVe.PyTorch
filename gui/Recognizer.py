@@ -58,3 +58,15 @@ class Recognizer():
     features_sum = features_sum.numpy()
 
     return features_sum
+
+  def find_nearest_user(self, emb, users):
+    nearest_user, nearest_dist = None, 9999
+
+    for user in users:
+      dist = np.linalg.norm(emb - user['emb'])
+
+      if dist < FACE_RECOGNITION_THRESHOLD and dist < nearest_dist:
+        nearest_user = user.copy()
+        nearest_dist = dist
+
+    return nearest_user, nearest_dist

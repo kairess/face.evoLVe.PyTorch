@@ -111,6 +111,8 @@ def reset_user_inputs():
   app.resetProperties('user_tastes', callFunction=False)
 
 def button_create_user():
+  global users
+
   if camera.captured_face_img is None:
     reset_user_inputs()
     print('[!] Error: button_create_user()')
@@ -130,7 +132,16 @@ def button_create_user():
 
   emb = recognizer.compute_emb(user_face_img)
 
+  # check same faces
+  nearest_user, nearest_dist = recognizer.find_nearest_user(emb, users)
+
+  if nearest_user is not None:
+    print('[!] Similar user exist!', nearest_user, nearest_dist)
+    return False
+
   db.create_user(name=user_name, gender=user_gender, age=user_age, tastes=user_tastes, emb=emb, img=user_face_img)
+
+  users = db.get_users()
 
   reset_user_inputs()
   app.hideSubWindow('User Window')
