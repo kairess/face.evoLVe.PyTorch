@@ -20,17 +20,17 @@ c.execute('''CREATE TABLE users (
   emb TEXT
 )''')
 
-c.execute('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)', (
-  None,
-  datetime.datetime.now(),
-  '이태희',
-  0,
-  30,
-  json.dumps({'abc': True, 'bcd': False}),
-  np.ones((1, 512), np.float32)
-))
+# c.execute('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, ?)', (
+#   None,
+#   datetime.datetime.now(),
+#   '이태희',
+#   0,
+#   30,
+#   json.dumps({'abc': True, 'bcd': False}),
+#   np.ones((1, 512), np.float32)
+# ))
 
-conn.commit()
+# conn.commit()
 
 c.execute('SELECT * FROM users')
 
@@ -38,4 +38,4 @@ users = c.fetchall()
 
 print(users)
 
-print(json.loads(users[0][5]))
+# print(json.loads(users[0][5]))

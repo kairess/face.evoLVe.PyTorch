@@ -27,6 +27,7 @@ app = gui('CRAIMS - Customer Relationship AI Management System') # , '%sx%s' % W
 app.setBg(COLOR_SCHEME['bg'])
 app.setFg(COLOR_SCHEME['font'])
 app.setFont(size=14) #, family='Nanum Gothic')
+app.setLogLevel('ERROR')
 
 with app.tabbedFrame('TABS'):
   with app.tab('MAIN'):
@@ -60,10 +61,32 @@ with app.tabbedFrame('TABS'):
 
       img_tk = ImageTk.PhotoImage(Image.fromarray(cv2.cvtColor(camera.captured_face_img, cv2.COLOR_BGR2RGB), 'RGB'))
       app.setImageData('biggest_face', img_tk, fmt='PhotoImage')
-      app.showSubWindow('User Window')
+      app.showSubWindow('Create User Window')
 
     def button_recognize():
-      print('button_recognize')
+      global users
+
+      img_A = camera.biggest_face_img.copy()
+      emb_A = recognizer.compute_emb(img_A)
+
+      nearest_user, nearest_dist = recognizer.find_nearest_user(emb_A, users)
+
+      if nearest_user is None:
+        app.warningBox('wb_no_matched_user', '일치하는 사람이 없습니다!')
+        return False
+
+      app.setImage('recognized_user_face', 'db/face_imgs/%d.jpg' % (nearest_user['id'],))
+
+      img_tk = ImageTk.PhotoImage(Image.fromarray(cv2.cvtColor(img_A, cv2.COLOR_BGR2RGB), 'RGB'))
+      app.setImageData('current_user_face', img_tk, fmt='PhotoImage')
+
+      app.setLabel('l_dist', nearest_dist)
+      app.setLabel('l_user_name', nearest_user['name'])
+      app.setLabel('l_user_gender', '남' if nearest_user['gender'] == 0 else '여')
+      app.setLabel('l_user_age', '%d대' % nearest_user['age'])
+      app.setLabel('l_user_tastes', nearest_user['tastes'])
+
+      app.showSubWindow('Recognize User Window')
 
     with app.frame('CAMERA_CONTROL', row=3, column=0, stretch='COLUMN'):
       app.addButtons(['Capture Face', 'Find Face'], [button_capture_face, button_recognize])
@@ -80,9 +103,9 @@ print('[*] Initializing camera thread...')
 app.thread(camera.thread, app)
 
 '''
-Select user sub window
+Create user sub window
 '''
-app.startSubWindow('User Window', modal=True)
+app.startSubWindow('Create User Window', modal=True)
 
 img_tk = ImageTk.PhotoImage(Image.fromarray(np.zeros((128, 128, 3), np.uint8), 'RGB'))
 app.addImageData('biggest_face', img_tk, fmt='PhotoImage')
@@ -136,7 +159,7 @@ def button_create_user():
   nearest_user, nearest_dist = recognizer.find_nearest_user(emb, users)
 
   if nearest_user is not None:
-    print('[!] Similar user exist!', nearest_user, nearest_dist)
+    app.warningBox('wb_similar_face_exist', '비슷한 사람이 있습니다!\nid:%s - %s' % (nearest_user['id'], nearest_dist))
     return False
 
   db.create_user(name=user_name, gender=user_gender, age=user_age, tastes=user_tastes, emb=emb, img=user_face_img)
@@ -144,15 +167,45 @@ def button_create_user():
   users = db.get_users()
 
   reset_user_inputs()
-  app.hideSubWindow('User Window')
+  app.hideSubWindow('Create User Window')
 
 def button_cancel_close():
   reset_user_inputs()
-  app.hideSubWindow('User Window')
+  app.hideSubWindow('Create User Window')
 
 app.addButtons(['등록', '취소'], [button_create_user, button_cancel_close])
 
 app.stopSubWindow()
+
+'''
+Recognize user sub window
+'''
+app.startSubWindow('Recognize User Window', modal=True)
+
+app.addLabel('l_fcu', '카메라')
+img_tk = ImageTk.PhotoImage(Image.fromarray(np.zeros((128, 128, 3), np.uint8), 'RGB'))
+app.addImageData('current_user_face', img_tk, fmt='PhotoImage')
+
+app.addLabel('l_ruf', '인식결과')
+img_tk = ImageTk.PhotoImage(Image.fromarray(np.zeros((128, 128, 3), np.uint8), 'RGB'))
+app.addImageData('recognized_user_face', img_tk, fmt='PhotoImage')
+
+app.addLabel('l_dist', 'Label 1')
+app.addLabel('l_user_name', 'Label 1')
+app.addLabel('l_user_gender', 'Label 1')
+app.addLabel('l_user_age', 'Label 1')
+app.addLabel('l_user_tastes', 'Label 1')
+
+def button_select_user():
+  print('button_select_user')
+
+def button_close_user():
+  app.hideSubWindow('Recognize User Window')
+
+app.addButtons(['선택', '취소2'], [button_select_user, button_close_user])
+
+app.stopSubWindow()
+
 '''
 Exit
 '''
